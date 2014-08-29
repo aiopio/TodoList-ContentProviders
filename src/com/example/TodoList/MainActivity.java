@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -24,6 +25,25 @@ public class MainActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		updateUI();
+	}
+
+	private void logTasks() {
+		StringBuilder sb = new StringBuilder();
+		Uri uri = TaskContract.CONTENT_URI;
+		Cursor c = this.getContentResolver().query(uri,null,null,null,null);
+		if (c.getCount() > 0) {
+			Log.i("Tasks","Getting Information");
+			c.moveToFirst();
+			do {
+				sb.append(c.getString(1)).append("\n");
+
+			} while (c.moveToNext());
+			c.close();
+
+			Log.i("Tasks",sb.toString());
+		} else {
+			Log.i("Tasks","No information!");
+		}
 	}
 
 	@Override
@@ -85,6 +105,7 @@ public class MainActivity extends ListActivity {
 		);
 
 		this.setListAdapter(listAdapter);
+		this.logTasks();
 	}
 
 	public void onDoneButtonClick(View view) {

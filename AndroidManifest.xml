@@ -14,5 +14,9 @@
             </intent-filter>
         </activity>
 
+        <provider
+                android:authorities="com.example.TodoList.mytasks"
+                android:name=".db.TaskProvider" />
+
     </application>
 </manifest>
