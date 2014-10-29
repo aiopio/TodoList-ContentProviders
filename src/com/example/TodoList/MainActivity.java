@@ -5,45 +5,25 @@ import android.app.ListActivity;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.*;
+import android.widget.EditText;
+import android.widget.ListAdapter;
+import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 import com.example.TodoList.db.TaskContract;
-import com.example.TodoList.db.TaskDBHelper;
 
 public class MainActivity extends ListActivity {
 	private ListAdapter listAdapter;
-	private TaskDBHelper helper;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		updateUI();
-	}
-
-	private void logTasks() {
-		StringBuilder sb = new StringBuilder();
-		Uri uri = TaskContract.CONTENT_URI;
-		Cursor c = this.getContentResolver().query(uri,null,null,null,null);
-		if (c.getCount() > 0) {
-			Log.i("Tasks","Getting Information");
-			c.moveToFirst();
-			do {
-				sb.append(c.getString(1)).append("\n");
-
-			} while (c.moveToNext());
-			c.close();
-
-			Log.i("Tasks",sb.toString());
-		} else {
-			Log.i("Tasks","No information!");
-		}
 	}
 
 	@Override
@@ -66,14 +46,14 @@ public class MainActivity extends ListActivity {
 					public void onClick(DialogInterface dialogInterface, int i) {
 						String task = inputField.getText().toString();
 
-						helper = new TaskDBHelper(MainActivity.this);
-						SQLiteDatabase db = helper.getWritableDatabase();
 						ContentValues values = new ContentValues();
 
 						values.clear();
 						values.put(TaskContract.Columns.TASK,task);
 
-						db.insertWithOnConflict(TaskContract.TABLE,null,values,SQLiteDatabase.CONFLICT_IGNORE);
+                        Uri uri = TaskContract.CONTENT_URI;
+                        getApplicationContext().getContentResolver().insert(uri,values);
+
 						updateUI();
 					}
 				});
@@ -89,11 +69,8 @@ public class MainActivity extends ListActivity {
 	}
 
 	private void updateUI() {
-		helper = new TaskDBHelper(MainActivity.this);
-		SQLiteDatabase sqlDB = helper.getReadableDatabase();
-		Cursor cursor = sqlDB.query(TaskContract.TABLE,
-				new String[]{TaskContract.Columns._ID, TaskContract.Columns.TASK},
-				null, null, null, null, null);
+        Uri uri = TaskContract.CONTENT_URI;
+        Cursor cursor = this.getContentResolver().query(uri,null,null,null,null);
 
 		listAdapter = new SimpleCursorAdapter(
 				this,
@@ -105,7 +82,6 @@ public class MainActivity extends ListActivity {
 		);
 
 		this.setListAdapter(listAdapter);
-		this.logTasks();
 	}
 
 	public void onDoneButtonClick(View view) {
@@ -113,15 +89,11 @@ public class MainActivity extends ListActivity {
 		TextView taskTextView = (TextView) v.findViewById(R.id.taskTextView);
 		String task = taskTextView.getText().toString();
 
-		String sql = String.format("DELETE FROM %s WHERE %s = '%s'",
-						TaskContract.TABLE,
-						TaskContract.Columns.TASK,
-						task);
+        Uri uri = TaskContract.CONTENT_URI;
+        this.getContentResolver().delete(uri,
+                TaskContract.Columns.TASK + "=?",
+                new String[]{task});
 
-
-		helper = new TaskDBHelper(MainActivity.this);
-		SQLiteDatabase sqlDB = helper.getWritableDatabase();
-		sqlDB.execSQL(sql);
 		updateUI();
 	}
 }
